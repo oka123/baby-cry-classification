@@ -71,7 +71,7 @@ def load_model_bundle(model_key):
         # Import TensorFlow di sini (bukan di top-level) agar aplikasi tetap
         # bisa dibuka walau TensorFlow belum siap / model DL belum dipilih.
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-        os.environ["TF_ENABLE_ONEDNN_OPTS"] = "1"
+        os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         warnings.filterwarnings("ignore", category=UserWarning)
         logging.getLogger("tensorflow").setLevel(logging.ERROR)

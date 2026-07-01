@@ -24,7 +24,7 @@ import os
 import warnings
 
 # Redam log TensorFlow & Keras
-os.environ["TF_ENABLE_ONEDNN_OPTS"] = "1"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
