@@ -1,0 +1,13 @@
+{
+  "classes": [
+    "belly_pain",
+    "burping",
+    "discomfort",
+    "hungry",
+    "tired"
+  ],
+  "sample_rate": 22050,
+  "segment_duration": 2.0,
+  "n_mfcc": 13,
+  "max_timesteps": 87
+}
