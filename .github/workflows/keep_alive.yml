@@ -14,3 +14,7 @@ jobs:
       - name: Ping Streamlit URL
         run: |
           curl -I https://baby-cry-classification.streamlit.app/
+
+          curl -I https://algoritma-rsa.streamlit.app/
+
+          curl -I https://klasifikasi-berita-dt.streamlit.app/
