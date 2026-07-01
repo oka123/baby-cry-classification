@@ -1,0 +1,16 @@
+name: Keep Streamlit App Awake
+
+on:
+  schedule:
+    # Run every 1 hours to prevent Streamlit from sleeping
+    - cron: "0 */1 * * *"
+  workflow_dispatch: # Allows manual trigger from the GitHub actions tab
+
+jobs:
+  ping:
+    name: Send Ping Request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Streamlit URL
+        run: |
+          curl -I https://baby-cry-classification.streamlit.app/
