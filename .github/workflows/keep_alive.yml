@@ -13,8 +13,6 @@ jobs:
     steps:
       - name: Ping Streamlit URL
         run: |
-          curl -I https://baby-cry-classification.streamlit.app/
-
-          curl -I https://algoritma-rsa.streamlit.app/
-
-          curl -I https://klasifikasi-berita-dt.streamlit.app/
+          curl -fsSL https://baby-cry-classification.streamlit.app/ > /dev/null
+          curl -fsSL https://algoritma-rsa.streamlit.app/ > /dev/null
+          curl -fsSL https://klasifikasi-berita-dt.streamlit.app/ > /dev/null
