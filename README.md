@@ -8,8 +8,8 @@ Aplikasi ini dirancang dengan antarmuka yang ramah pengguna, visualisasi interak
 
 ## 🌟 Fitur Utama
 
-- **16 Pilihan Model Klasifikasi**  
-  Pengguna dapat memilih model berdasarkan algoritma (SVM, Random Forest, CNN, CNN-LSTM), skema fitur (MFCC atau MFCC + Pitch), serta teknik penanganan ketidakseimbangan kelas (dengan atau tanpa _under-sampling_).
+- **10 Pilihan Model Klasifikasi**  
+  Pengguna dapat memilih model berdasarkan algoritma (SVM, Random Forest, CNN, CNN-LSTM), skema fitur (MFCC / MFCC + Pitch / Mel-Spectrogram), serta strategi augmentasi data (dengan atau tanpa augmentasi).
 
 - **Visualisasi Alur Pemrosesan (DSP)**
   - **Waveform Perbandingan**: Menampilkan sinyal audio sebelum dan sesudah preprocessing (_resampling_, normalisasi amplitudo, dan pemotongan bagian hening).

@@ -4,10 +4,9 @@ app.py
 =======
 Aplikasi Streamlit: Klasifikasi Jenis Tangisan Bayi.
 
-Menggunakan salah satu dari 16 model (SVM, Random Forest, CNN, CNN-LSTM
-x skema fitur MFCC saja / MFCC+Pitch x dengan/tanpa under-sampling) yang
-telah dilatih pada notebook `penyelesaian-kasus-2.py` dan disimpan pada
-folder `deployed_models/`.
+Menggunakan salah satu dari 10 model (SVM, Random Forest, CNN, CNN-LSTM
+x skema fitur x dengan/tanpa augmentasi) yang telah dilatih pada notebook
+dan disimpan pada folder `saved_models/saved_models`.
 
 Alur aplikasi (ditampilkan sebagai langkah 1-5 di halaman ini):
     1. Upload audio
@@ -55,7 +54,7 @@ st.set_page_config(
 
 st.title("👶 Klasifikasi Jenis Tangisan Bayi")
 st.caption(
-    "Menggunakan 16 model Machine Learning & Deep Learning (SVM, Random Forest, "
+    "Menggunakan 10 model Machine Learning & Deep Learning (SVM, Random Forest, "
     "CNN, CNN-LSTM) yang dilatih pada dataset **Donate-a-Cry Corpus** "
     "(sumber data: [Kaggle Infant Cry Audio Corpus](https://www.kaggle.com/datasets/warcoder/infant-cry-audio-corpus)) "
     "untuk mengenali alasan bayi menangis dari rekaman audio."
@@ -63,11 +62,10 @@ st.caption(
 
 if not check_models_available():
     st.error(
-        "Folder `deployed_models/` beserta `registry.json` tidak ditemukan.\n\n"
-        "Pastikan seluruh hasil training (16 model, scaler/norm stats, "
-        "`label_encoder.joblib`, `config.json`, `registry.json`) sudah "
-        "ditempatkan pada folder `deployed_models/` di direktori yang sama "
-        "dengan `app.py`."
+        "Folder `saved_models/saved_models/` tidak ditemukan.\n\n"
+        "Pastikan seluruh hasil training (10 model, scaler, "
+        "serta `metadata.json`) sudah "
+        "ditempatkan pada folder `saved_models/saved_models/` di parent direktori."
     )
     st.stop()
 
