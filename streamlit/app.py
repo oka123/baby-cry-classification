@@ -83,22 +83,18 @@ df_registry = pd.DataFrame([
         "key": key,
         "Algoritma": info["algo"],
         "Skema Fitur": "MFCC + Pitch" if info["include_pitch"] else "MFCC saja",
-        "Under-sampling": "Ya" if info["under_sampling"] else "Tidak",
-        "Accuracy": info["accuracy"],
-        "Precision": info["precision"],
-        "Recall": info["recall"],
-        "F1-Score": info["f1"],
+        "Augmentasi": "Tanpa Augmentasi" if info.get("is_noaug") else "Dengan Augmentasi",
     }
     for key, info in registry.items()
-]).sort_values("F1-Score", ascending=False).reset_index(drop=True)
+]).sort_values("key").reset_index(drop=True)
 
 model_key = st.sidebar.selectbox(
-    "Pilih salah satu dari 16 model:",
+    "Pilih model klasifikasi:",
     options=df_registry["key"].tolist(),
     format_func=lambda k: (
         f"{registry[k]['algo']} | "
         f"{'MFCC+Pitch' if registry[k]['include_pitch'] else 'MFCC'} | "
-        f"Undersampling={'Ya' if registry[k]['under_sampling'] else 'Tidak'}"
+        f"{'Tanpa Aug' if registry[k].get('is_noaug') else 'Dengan Aug'}"
     ),
 )
 
@@ -273,8 +269,5 @@ plot_probability_bar(result["mean_probs"], result["classes"], CLASS_LABELS_ID)
 st.info(
     f"Model yang digunakan: **{info_sel['algo']}** dengan skema fitur "
     f"**{'MFCC + Pitch' if info_sel['include_pitch'] else 'MFCC saja'}** "
-    f"({'dengan' if info_sel['under_sampling'] else 'tanpa'} under-sampling)."
-    # Commented out test accuracy display
-    # f" Akurasi model ini pada data uji (saat training): "
-    # f"**{info_sel['accuracy'] * 100:.2f}%**."
+    f"({'tanpa' if info_sel.get('is_noaug') else 'dengan'} augmentasi data)."
 )

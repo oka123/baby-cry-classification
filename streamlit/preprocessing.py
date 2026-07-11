@@ -4,10 +4,6 @@ preprocessing.py
 ================
 Preprocessing & segmentasi audio untuk keperluan INFERENCE.
 
-Fungsi-fungsi di sini SENGAJA dibuat identik dengan fungsi `preprocess_audio()`
-dan `segment_audio()` pada notebook training, agar representasi data yang
-"dilihat" oleh model saat inference sama persis dengan saat training.
-
 Catatan: augmentasi audio (time-stretch, pitch-shift, noise) TIDAK dipakai
 di sini karena augmentasi hanya relevan untuk memperbanyak data LATIH,
 bukan untuk data yang sedang diklasifikasikan.
@@ -82,14 +78,14 @@ def load_and_preprocess(file_like, target_sr=TARGET_SR, top_db=TOP_DB):
             except Exception:
                 pass
 
-    # 3) Normalisasi amplitudo: skala sinyal agar nilai absolut maksimum = 1
-    if np.max(np.abs(y)) > 0:
-        y = y / np.max(np.abs(y))
-
-    # 4) Trimming silence di awal & akhir sinyal
+    # 3) Trimming silence di awal & akhir sinyal (identik dengan notebook)
     y_trimmed, _ = librosa.effects.trim(y, top_db=top_db)
     if len(y_trimmed) == 0:
         y_trimmed = y
+
+    # 4) Normalisasi amplitudo ke [-1, 1]
+    if np.max(np.abs(y_trimmed)) > 0:
+        y_trimmed = y_trimmed / np.max(np.abs(y_trimmed))
 
     return {
         "y_raw": y_raw,
@@ -107,14 +103,19 @@ def segment_audio(y, segment_length=SEGMENT_LENGTH):
     - Jika audio lebih pendek dari 1 segmen -> di-padding nol.
     - Jika lebih panjang -> dipotong berurutan tanpa overlap.
     """
-    if len(y) < segment_length:
+    if len(y) <= segment_length:
         y_padded = np.pad(y, (0, segment_length - len(y)), mode="constant")
         return [y_padded]
 
     segments = []
-    start = 0
-    while start + segment_length <= len(y):
-        segments.append(y[start:start + segment_length])
-        start += segment_length
+    n_segments = len(y) // segment_length
+    for i in range(n_segments):
+        segments.append(y[i*segment_length:(i+1)*segment_length])
+        
+    remainder = len(y) - n_segments * segment_length
+    if remainder > segment_length * 0.5:
+        last = y[n_segments*segment_length:]
+        last = np.pad(last, (0, segment_length - len(last)), mode='constant')
+        segments.append(last)
 
-    return segments if segments else [y[:segment_length]]
+    return segments

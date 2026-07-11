@@ -18,58 +18,71 @@ import logging
 import joblib
 import streamlit as st
 
-from config import MODEL_DIR, REGISTRY_FILE, CONFIG_FILE, LABEL_ENCODER_FILE
+from config import MODEL_DIR
 
 
 def check_models_available():
-    """Mengecek apakah folder deployed_models & registry.json sudah tersedia."""
-    return os.path.isdir(MODEL_DIR) and os.path.isfile(REGISTRY_FILE)
+    """Mengecek apakah folder model sudah tersedia."""
+    return os.path.isdir(MODEL_DIR)
 
 
 @st.cache_resource(show_spinner=False)
 def load_registry():
-    """Memuat metadata seluruh 16 model (algoritma, skema fitur, metrik, dst)."""
-    with open(REGISTRY_FILE, "r") as f:
-        return json.load(f)
-
-
-@st.cache_resource(show_spinner=False)
-def load_global_config():
-    """Memuat config.json (daftar kelas, sample rate, durasi segmen, dst)."""
-    with open(CONFIG_FILE, "r") as f:
-        return json.load(f)
-
-
-@st.cache_resource(show_spinner=False)
-def load_label_encoder():
-    """Memuat LabelEncoder yang dipakai bersama oleh seluruh 16 model."""
-    return joblib.load(LABEL_ENCODER_FILE)
+    """Memuat daftar model yang tersedia secara dinamis dari folder."""
+    registry = {}
+    
+    traditional_dir = os.path.join(MODEL_DIR, "traditional")
+    if os.path.isdir(traditional_dir):
+        for f in os.listdir(traditional_dir):
+            if f.endswith(".joblib"):
+                key = f.replace(".joblib", "")
+                algo = "SVM" if "svm" in f else "Random Forest"
+                include_pitch = "mfcc_only" not in f
+                
+                registry[key] = {
+                    "type": "traditional",
+                    "algo": algo,
+                    "include_pitch": include_pitch,
+                    "model_file": os.path.join("traditional", f),
+                    "is_noaug": "noaug" in f
+                }
+                
+    dl_dir = os.path.join(MODEL_DIR, "deep_learning")
+    if os.path.isdir(dl_dir):
+        for f in os.listdir(dl_dir):
+            if f.endswith(".keras"):
+                key = f.replace(".keras", "")
+                algo = "CNN-LSTM" if "lstm" in f else "CNN"
+                
+                registry[key] = {
+                    "type": "deep_learning",
+                    "algo": algo,
+                    "include_pitch": False,
+                    "model_file": os.path.join("deep_learning", f),
+                    "is_noaug": "noaug" in f
+                }
+                
+    return registry
 
 
 @st.cache_resource(show_spinner=False)
 def load_model_bundle(model_key):
     """
-    Memuat 1 model beserta artefak pendukungnya berdasarkan `model_key`
-    pada registry.json.
-
-    - Model "traditional" (SVM / Random Forest) -> memuat model (.joblib)
-      dan StandardScaler (.joblib).
-    - Model "deep_learning" (CNN / CNN-LSTM) -> memuat model (.keras)
-      dan statistik normalisasi z-score (.json).
+    Memuat 1 model beserta artefak pendukungnya berdasarkan `model_key`.
     """
     registry = load_registry()
     if model_key not in registry:
-        raise ValueError(f"Model '{model_key}' tidak ditemukan pada registry.json")
+        raise ValueError(f"Model '{model_key}' tidak ditemukan pada registry")
 
     info = registry[model_key]
     bundle = {"info": info}
 
     if info["type"] == "traditional":
-        bundle["model"] = joblib.load(os.path.join(MODEL_DIR, info["model_file"]))
-        bundle["scaler"] = joblib.load(os.path.join(MODEL_DIR, info["scaler_file"]))
+        data = joblib.load(os.path.join(MODEL_DIR, info["model_file"]))
+        bundle["model"] = data["model"]
+        bundle["scaler"] = data["scaler"]
+        bundle["label_encoder"] = data["label_encoder"]
     else:
-        # Import TensorFlow di sini (bukan di top-level) agar aplikasi tetap
-        # bisa dibuka walau TensorFlow belum siap / model DL belum dipilih.
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
         os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
         warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -81,7 +94,8 @@ def load_model_bundle(model_key):
         bundle["model"] = tf.keras.models.load_model(
             os.path.join(MODEL_DIR, info["model_file"])
         )
-        with open(os.path.join(MODEL_DIR, info["norm_file"]), "r") as f:
-            bundle["norm_stats"] = json.load(f)
+        enc_path = os.path.join(MODEL_DIR, "deep_learning", "dl_label_encoder.joblib")
+        enc_data = joblib.load(enc_path)
+        bundle["label_encoder"] = enc_data["label_encoder"]
 
     return bundle

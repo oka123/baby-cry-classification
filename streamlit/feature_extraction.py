@@ -4,10 +4,6 @@ feature_extraction.py
 ======================
 Ekstraksi fitur audio & feature engineering untuk keperluan INFERENCE.
 
-Seluruh fungsi di file ini SENGAJA disalin identik dari notebook training
-(bagian "7. EKSTRAKSI FITUR" & "8. FEATURE ENGINEERING") supaya representasi
-fitur yang dipakai untuk prediksi konsisten dengan representasi fitur yang
-dipakai saat training model.
 """
 
 import numpy as np
@@ -19,8 +15,7 @@ from config import N_MFCC, FMIN_PITCH, FMAX_PITCH
 def extract_features(y, sr, n_mfcc=N_MFCC):
     """
     Mengekstrak seluruh fitur audio dari 1 segmen sinyal (frame-level / time
-    series), TANPA melakukan agregasi statistik. Identik dengan
-    `extract_features()` pada notebook training.
+    series), TANPA melakukan agregasi statistik.
 
     Fitur yang diekstraksi:
     - RMS Energy (domain waktu)
@@ -36,10 +31,14 @@ def extract_features(y, sr, n_mfcc=N_MFCC):
     spectral_bandwidth = librosa.feature.spectral_bandwidth(y=y, sr=sr)[0]
 
     try:
-        pitch = librosa.yin(y, fmin=FMIN_PITCH, fmax=FMAX_PITCH, sr=sr)
-        pitch = np.nan_to_num(pitch, nan=0.0, posinf=0.0, neginf=0.0)
+        pitch, _, _ = librosa.pyin(
+            y, fmin=librosa.note_to_hz('C2'), fmax=librosa.note_to_hz('C7'), sr=sr
+        )
+        pitch = pitch[~np.isnan(pitch)]
+        if len(pitch) == 0:
+            pitch = np.array([0.0])
     except Exception:
-        pitch = np.zeros_like(rms)
+        pitch = np.array([0.0])
 
     mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc)
 
@@ -53,19 +52,9 @@ def extract_features(y, sr, n_mfcc=N_MFCC):
     }
 
 
-def aggregate_statistics(feature_array):
-    """Meringkas array fitur per-frame (1D/2D) menjadi statistik: mean, std, min, max."""
-    feature_array = np.array(feature_array)
-    if feature_array.ndim == 1:
-        return np.array([
-            np.mean(feature_array), np.std(feature_array),
-            np.min(feature_array), np.max(feature_array),
-        ])
-    mean_ = np.mean(feature_array, axis=1)
-    std_ = np.std(feature_array, axis=1)
-    min_ = np.min(feature_array, axis=1)
-    max_ = np.max(feature_array, axis=1)
-    return np.concatenate([mean_, std_, min_, max_])
+def summarize_stats(arr):
+    """Ringkas array 1D jadi mean, std, min, max."""
+    return [np.mean(arr), np.std(arr), np.min(arr), np.max(arr)]
 
 
 def build_feature_vector(features_dict, use_pitch=True):
@@ -74,16 +63,26 @@ def build_feature_vector(features_dict, use_pitch=True):
     ML tradisional (SVM / Random Forest). Identik dengan
     `build_feature_vector()` pada notebook training.
     """
-    parts = [
-        aggregate_statistics(features_dict["rms"]),
-        aggregate_statistics(features_dict["zcr"]),
-        aggregate_statistics(features_dict["spectral_centroid"]),
-        aggregate_statistics(features_dict["spectral_bandwidth"]),
-        aggregate_statistics(features_dict["mfcc"]),
-    ]
+    row = []
+    row.extend(summarize_stats(features_dict["rms"]))
+    row.extend(summarize_stats(features_dict["zcr"]))
+    row.extend(summarize_stats(features_dict["spectral_centroid"]))
+    row.extend(summarize_stats(features_dict["spectral_bandwidth"]))
+    for i in range(features_dict["mfcc"].shape[0]):
+        row.extend(summarize_stats(features_dict["mfcc"][i]))
     if use_pitch:
-        parts.append(aggregate_statistics(features_dict["pitch"]))
-    return np.concatenate(parts)
+        row.extend(summarize_stats(features_dict["pitch"]))
+    return np.array(row)
+
+
+def extract_melspectrogram(y, sr, n_mels=128):
+    """
+    Mengekstrak fitur Mel-Spectrogram (2D) untuk input CNN / CNN-LSTM.
+    Identik dengan `extract_melspectrogram()` pada notebook training.
+    """
+    mel = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=n_mels)
+    mel_db = librosa.power_to_db(mel, ref=np.max)
+    return mel_db
 
 
 def build_deep_feature_matrix(features_dict, use_pitch=True):

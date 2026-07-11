@@ -1,0 +1,16 @@
+{
+  "classes": [
+    "belly_pain",
+    "burping",
+    "discomfort",
+    "hungry",
+    "tired"
+  ],
+  "sample_rate": 22050,
+  "segment_duration": 2.0,
+  "segment_length": 44100,
+  "n_mels": 128,
+  "n_mfcc": 13,
+  "trained_at": "2026-07-11",
+  "description": "Infant Cry Classification - Donate-a-Cry Corpus"
+}

@@ -16,13 +16,8 @@ import os
 # ------------------------------------------------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Folder tempat 16 model hasil training + scaler/norm stats + metadata
-# (label_encoder.joblib, config.json, registry.json) disimpan.
-MODEL_DIR = os.path.join(BASE_DIR, "../deployed_models")
-
-REGISTRY_FILE = os.path.join(MODEL_DIR, "../deployed_models/registry.json")
-CONFIG_FILE = os.path.join(MODEL_DIR, "../deployed_models/config.json")
-LABEL_ENCODER_FILE = os.path.join(MODEL_DIR, "../deployed_models/label_encoder.joblib")
+# Folder tempat model hasil training disimpan
+MODEL_DIR = os.path.join(BASE_DIR, "../saved_models/saved_models")
 
 # ------------------------------------------------------------------
 # PARAMETER PREPROCESSING AUDIO (harus sama dengan notebook training)

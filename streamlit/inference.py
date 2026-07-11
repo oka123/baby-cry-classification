@@ -22,11 +22,10 @@ import numpy as np
 from preprocessing import load_and_preprocess, segment_audio
 from feature_extraction import (
     extract_features,
+    extract_melspectrogram,
     build_feature_vector,
-    build_deep_feature_matrix,
-    pad_or_truncate,
 )
-from model_loader import load_model_bundle, load_label_encoder
+from model_loader import load_model_bundle
 
 
 def _predict_traditional(bundle, raw_features_list, use_pitch):
@@ -43,21 +42,18 @@ def _predict_traditional(bundle, raw_features_list, use_pitch):
     return np.array(segment_probs)
 
 
-def _predict_deep_learning(bundle, raw_features_list, use_pitch):
-    """Prediksi probabilitas per segmen menggunakan model deep learning."""
+def _predict_deep_learning(bundle, segments, sr):
+    """Prediksi probabilitas per segmen menggunakan model deep learning (Mel-Spectrogram)."""
     model = bundle["model"]
-    norm_stats = bundle["norm_stats"]
 
-    mean = np.array(norm_stats["mean"]).reshape(1, 1, -1)
-    std = np.array(norm_stats["std"]).reshape(1, 1, -1)
-    target_len = norm_stats["input_shape"][0]
-
-    matrices = [
-        pad_or_truncate(build_deep_feature_matrix(feats, use_pitch=use_pitch), target_len)
-        for feats in raw_features_list
-    ]
+    matrices = [extract_melspectrogram(seg, sr) for seg in segments]
     X = np.stack(matrices)
-    X_norm = (X - mean) / std
+    
+    # Normalisasi min-max (per-batch/file inference) identik dengan notebook training
+    X_norm = (X - X.min()) / (X.max() - X.min() + 1e-8)
+    
+    # Tambahkan dimensi channel
+    X_norm = X_norm[..., np.newaxis]
 
     probs_all = model.predict(X_norm, verbose=0)
     return np.array(probs_all)
@@ -85,7 +81,7 @@ def predict_audio(uploaded_file, model_key):
     """
     bundle = load_model_bundle(model_key)
     info = bundle["info"]
-    label_encoder = load_label_encoder()
+    label_encoder = bundle["label_encoder"]
     use_pitch = info["include_pitch"]
 
     # 1 Preprocessing
@@ -102,7 +98,7 @@ def predict_audio(uploaded_file, model_key):
     if info["type"] == "traditional":
         segment_probs = _predict_traditional(bundle, raw_features_list, use_pitch)
     else:
-        segment_probs = _predict_deep_learning(bundle, raw_features_list, use_pitch)
+        segment_probs = _predict_deep_learning(bundle, segments, sr)
 
     segment_preds = np.argmax(segment_probs, axis=1)
 
