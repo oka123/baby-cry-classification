@@ -19,20 +19,16 @@ Aplikasi ini dirancang dengan antarmuka yang ramah pengguna, visualisasi interak
 - **Agregasi Prediksi Segmen**  
   Setiap segmen berdurasi 2 detik diklasifikasikan secara independen. Nilai probabilitas seluruh segmen kemudian dirata-ratakan untuk menghasilkan prediksi akhir yang lebih stabil.
 
-- **Tabel Perbandingan Performa**  
-  Sidebar aplikasi menampilkan metrik akurasi, presisi, _recall_, dan _F1-score_ dari seluruh variasi model.
-
----
 
 ## 📂 Struktur Direktori Proyek
 
 ```text
 .
-├── deployed_models/
-│   ├── registry.json              # Registri performa dan daftar model
-│   ├── label_encoder.joblib       # Encoder label kelas
-│   ├── config.json                # Konfigurasi model
-│   └── ...                        # File model (.keras/.joblib) dan scaler
+├── saved_models/
+│   └── saved_models/
+│       ├── metadata.json              # Konfigurasi kelas dan info dataset
+│       ├── traditional/               # File model ML (.joblib) (sudah termasuk Scaler & Encoder)
+│       └── deep_learning/             # File model DL (.keras) & dl_label_encoder.joblib
 ├── streamlit/
 │   ├── app.py                     # Entry point aplikasi Streamlit
 │   ├── config.py                  # Konfigurasi audio dan label
@@ -108,7 +104,7 @@ Browser akan terbuka secara otomatis pada alamat lokal (umumnya `http://localhos
    Audio dibagi menjadi segmen sepanjang **2 detik** tanpa tumpang tindih (_non-overlapping_). Segmen terakhir akan diberi _zero-padding_ apabila durasinya kurang dari 2 detik.
 
 4. **Ekstraksi Fitur**  
-   Diekstraksi fitur RMS, ZCR, Spectral Centroid, Spectral Bandwidth, Pitch (algoritma YIN), dan 13 koefisien MFCC.
+   Untuk Machine Learning tradisional, diekstraksi fitur RMS, ZCR, Spectral Centroid, Spectral Bandwidth, Pitch (algoritma YIN), dan 13 koefisien MFCC. Untuk Deep Learning, audio diekstraksi ke representasi **Mel-Spectrogram 2D**.
 
 5. **Klasifikasi**  
    Model menghasilkan salah satu dari lima kategori berikut:
@@ -122,13 +118,13 @@ Browser akan terbuka secara otomatis pada alamat lokal (umumnya `http://localhos
 
 ## 📊 Detail Model Klasifikasi
 
-Aplikasi mendukung **16 kombinasi model** yang dapat dipilih langsung melalui sidebar.
+Aplikasi mendukung **10 kombinasi model** yang dapat dipilih langsung melalui sidebar.
 
-| Algoritma         | Skema Fitur         | Under-sampling |
-| ----------------- | ------------------- | -------------- |
-| **SVM**           | MFCC / MFCC + Pitch | Ya / Tidak     |
-| **Random Forest** | MFCC / MFCC + Pitch | Ya / Tidak     |
-| **CNN**           | MFCC / MFCC + Pitch | Ya / Tidak     |
-| **CNN-LSTM**      | MFCC / MFCC + Pitch | Ya / Tidak     |
+| Algoritma         | Skema Fitur         | Augmentasi Data |
+| ----------------- | ------------------- | --------------- |
+| **SVM**           | MFCC / MFCC + Pitch | Ya / Tidak      |
+| **Random Forest** | MFCC / MFCC + Pitch | Ya / Tidak      |
+| **CNN**           | Mel-Spectrogram     | Ya / Tidak      |
+| **CNN-LSTM**      | Mel-Spectrogram     | Ya / Tidak      |
 
-Seluruh informasi metrik performa setiap model dibaca secara otomatis dari berkas `registry.json` dan ditampilkan pada antarmuka aplikasi ketika model dipilih.
+Seluruh informasi model dideteksi secara otomatis dari file-file dalam direktori `saved_models/saved_models`.
